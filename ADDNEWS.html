@@ -174,6 +174,51 @@
             margin-bottom: 5px;
         }
 
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #28a745;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -582,6 +627,20 @@
 
             <!-- Newsbar Form -->
             <div class="tab-content" id="newsbar">
+                <!-- Visibility Toggle -->
+                <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
+                    <label style="display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer;">
+                        <span style="font-size: 1.1em;">
+                            <span id="visibilityIcon">👁️</span>
+                            <span id="visibilityText">إظهار شريط الأخبار</span>
+                        </span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="newsbarVisibility" checked>
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </label>
+                </div>
+
                 <form id="newsbarForm">
                     <div class="news-type-selector">
                         <label>نوع شريط الأخبار</label>
@@ -644,7 +703,7 @@
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
-        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+        import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -755,6 +814,63 @@
             newsbarForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 await submitNewsbar();
+            });
+
+            // Newsbar visibility toggle
+            const visibilityToggle = document.getElementById('newsbarVisibility');
+            const visibilityIcon = document.getElementById('visibilityIcon');
+            const visibilityText = document.getElementById('visibilityText');
+
+            // Load current visibility state
+            loadNewsbarVisibility();
+
+            // Handle toggle change
+            visibilityToggle.addEventListener('change', async function() {
+                const isVisible = this.checked;
+                await updateNewsbarVisibility(isVisible);
+                updateVisibilityUI(isVisible);
+            });
+        }
+
+        function updateVisibilityUI(isVisible) {
+            const icon = document.getElementById('visibilityIcon');
+            const text = document.getElementById('visibilityText');
+            
+            if (isVisible) {
+                icon.textContent = '👁️';
+                text.textContent = 'إظهار شريط الأخبار';
+            } else {
+                icon.textContent = '🚫';
+                text.textContent = 'إخفاء شريط الأخبار';
+            }
+        }
+
+        async function updateNewsbarVisibility(isVisible) {
+            try {
+                const settingsRef = ref(database, 'newsbarSettings/visibility');
+                await set(settingsRef, {
+                    visible: isVisible,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: email
+                });
+                
+                const status = isVisible ? 'مرئي' : 'مخفي';
+                showStatus(`✅ تم تحديث حالة الشريط: ${status}`, 'success');
+            } catch (error) {
+                console.error('Error updating visibility:', error);
+                showStatus('❌ حدث خطأ أثناء تحديث حالة الشريط', 'error');
+            }
+        }
+
+        function loadNewsbarVisibility() {
+            const settingsRef = ref(database, 'newsbarSettings/visibility');
+            onValue(settingsRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.hasOwnProperty('visible')) {
+                    const isVisible = data.visible;
+                    document.getElementById('newsbarVisibility').checked = isVisible;
+                    updateVisibilityUI(isVisible);
+                }
             });
         }
 

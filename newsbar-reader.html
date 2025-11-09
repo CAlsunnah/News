@@ -288,6 +288,9 @@
             body.innerHTML = newsbarHTML;
         }
 
+        let currentNewsbarData = null;
+        let isVisible = true;
+
         function loadLatestNewsbar() {
             const newsbarRef = ref(database, 'newsbar');
             const latestNewsbarQuery = query(newsbarRef, orderByChild('createdAt'), limitToLast(1));
@@ -298,12 +301,13 @@
                 if (data) {
                     // Get the latest newsbar (the only one due to limitToLast(1))
                     const latestNewsbarKey = Object.keys(data)[0];
-                    const latestNewsbar = data[latestNewsbarKey];
-                    console.log('📰 تحديث شريط الأخبار:', latestNewsbar);
-                    displayNewsbar(latestNewsbar);
+                    currentNewsbarData = data[latestNewsbarKey];
+                    console.log('📰 تحديث شريط الأخبار:', currentNewsbarData);
+                    displayNewsbarIfVisible();
                 } else {
                     console.log('⚠️ لا توجد أخبار في قاعدة البيانات');
-                    displayNewsbar(null);
+                    currentNewsbarData = null;
+                    displayNewsbarIfVisible();
                 }
             }, (error) => {
                 console.error('Error loading newsbar:', error);
@@ -311,8 +315,48 @@
             });
         }
 
-        // Load newsbar on page load
+        function loadVisibilitySettings() {
+            const settingsRef = ref(database, 'newsbarSettings/visibility');
+            
+            onValue(settingsRef, (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data && data.hasOwnProperty('visible')) {
+                    isVisible = data.visible;
+                    console.log('👁️ حالة الشريط:', isVisible ? 'مرئي' : 'مخفي');
+                } else {
+                    // Default to visible if no setting exists
+                    isVisible = true;
+                }
+                
+                displayNewsbarIfVisible();
+            });
+        }
+
+        function displayNewsbarIfVisible() {
+            const body = document.body;
+            
+            if (!isVisible) {
+                // Hide the newsbar completely
+                body.innerHTML = '';
+                body.style.display = 'none';
+                console.log('🚫 الشريط مخفي');
+                return;
+            }
+            
+            body.style.display = 'flex';
+            
+            if (!currentNewsbarData) {
+                body.innerHTML = '<div class="loading">لا توجد أخبار متاحة حالياً</div>';
+                return;
+            }
+            
+            displayNewsbar(currentNewsbarData);
+        }
+
+        // Load newsbar and visibility settings on page load
         loadLatestNewsbar();
+        loadVisibilitySettings();
     </script>
 </body>
 </html>
