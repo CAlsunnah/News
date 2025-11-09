@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شريط الأخبار</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: transparent;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Force Latin numerals */
+        * {
+            font-variant-numeric: lining-nums;
+        }
+
+        .newsbar-container {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .newsbar-label {
+            flex-shrink: 0;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1em;
+            color: white;
+            z-index: 2;
+            min-width: 120px;
+        }
+
+        .newsbar-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            color: white;
+        }
+
+        .newsbar-text {
+            position: absolute;
+            white-space: nowrap;
+            padding-right: 100%;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        /* RTL Animation (from right to left) */
+        @keyframes scroll-rtl {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* LTR Animation (from left to right) */
+        @keyframes scroll-ltr {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Speed classes for RTL */
+        .newsbar-text.rtl.slow {
+            animation: scroll-rtl 40s linear infinite;
+        }
+
+        .newsbar-text.rtl.normal {
+            animation: scroll-rtl 25s linear infinite;
+        }
+
+        .newsbar-text.rtl.fast {
+            animation: scroll-rtl 15s linear infinite;
+        }
+
+        /* Speed classes for LTR */
+        .newsbar-text.ltr.slow {
+            animation: scroll-ltr 40s linear infinite;
+        }
+
+        .newsbar-text.ltr.normal {
+            animation: scroll-ltr 25s linear infinite;
+        }
+
+        .newsbar-text.ltr.fast {
+            animation: scroll-ltr 15s linear infinite;
+        }
+
+        /* News types colors */
+        .newsbar-container.urgent {
+            background: #dc3545;
+        }
+
+        .newsbar-container.general {
+            background: #007bff;
+        }
+
+        .newsbar-container.important {
+            background: #ffc107;
+        }
+
+        .newsbar-container.important .newsbar-label,
+        .newsbar-container.important .newsbar-content {
+            color: #333;
+        }
+
+        .newsbar-container.announcement {
+            background: #28a745;
+        }
+
+        /* Loading state */
+        .loading {
+            width: 100%;
+            height: 60px;
+            background: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1em;
+        }
+
+        .loader-dots {
+            display: inline-flex;
+            gap: 5px;
+            margin-right: 10px;
+        }
+
+        .loader-dots span {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loader-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loader-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .newsbar-container {
+                height: 50px;
+            }
+
+            .newsbar-label {
+                padding: 0 15px;
+                min-width: 100px;
+                font-size: 1em;
+            }
+
+            .newsbar-text {
+                font-size: 1em;
+            }
+
+            .loading {
+                height: 50px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .newsbar-container {
+                height: 45px;
+            }
+
+            .newsbar-label {
+                padding: 0 12px;
+                min-width: 85px;
+                font-size: 0.95em;
+            }
+
+            .newsbar-text {
+                font-size: 0.95em;
+            }
+
+            .loading {
+                height: 45px;
+                font-size: 0.85em;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="loading" id="loadingIndicator">
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        جاري تحميل آخر الأخبار...
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyATI4TBIST6x-ZYg4GXSrmP7IwU6JzFRHU",
+            authDomain: "news-1c1e6.firebaseapp.com",
+            databaseURL: "https://news-1c1e6-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "news-1c1e6",
+            storageBucket: "news-1c1e6.firebasestorage.app",
+            messagingSenderId: "486831505348",
+            appId: "1:486831505348:web:fce4acd4ecaeb188fbee91",
+            measurementId: "G-389RM5PRBT"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Type labels in Arabic
+        const typeLabels = {
+            urgent: '🔴 عاجل',
+            general: '📰 عام',
+            important: '⚠️ هام',
+            announcement: '📢 إعلان'
+        };
+
+        function displayNewsbar(newsbarData) {
+            const body = document.body;
+            
+            if (!newsbarData) {
+                body.innerHTML = '<div class="loading">لا توجد أخبار متاحة حالياً</div>';
+                return;
+            }
+
+            const type = newsbarData.type || 'general';
+            const text = newsbarData.text;
+            const label = typeLabels[type];
+            const speed = newsbarData.speed || 'normal'; // slow, normal, fast
+            const direction = newsbarData.direction || 'rtl'; // rtl, ltr
+
+            const newsbarHTML = `
+                <div class="newsbar-container ${type}">
+                    <div class="newsbar-label">${label}</div>
+                    <div class="newsbar-content">
+                        <div class="newsbar-text ${direction} ${speed}">${text}</div>
+                    </div>
+                </div>
+            `;
+
+            // Replace the entire body content to update the newsbar
+            body.innerHTML = newsbarHTML;
+        }
+
+        function loadLatestNewsbar() {
+            const newsbarRef = ref(database, 'newsbar');
+            const latestNewsbarQuery = query(newsbarRef, orderByChild('createdAt'), limitToLast(1));
+
+            onValue(latestNewsbarQuery, (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data) {
+                    // Get the latest newsbar (the only one due to limitToLast(1))
+                    const latestNewsbarKey = Object.keys(data)[0];
+                    const latestNewsbar = data[latestNewsbarKey];
+                    console.log('📰 تحديث شريط الأخبار:', latestNewsbar);
+                    displayNewsbar(latestNewsbar);
+                } else {
+                    console.log('⚠️ لا توجد أخبار في قاعدة البيانات');
+                    displayNewsbar(null);
+                }
+            }, (error) => {
+                console.error('Error loading newsbar:', error);
+                document.body.innerHTML = '<div class="loading">حدث خطأ أثناء تحميل الأخبار</div>';
+            });
+        }
+
+        // Load newsbar on page load
+        loadLatestNewsbar();
+    </script>
+</body>
+</html>
+

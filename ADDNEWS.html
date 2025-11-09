@@ -48,9 +48,130 @@
         h1 {
             color: #667eea;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-size: 1.8em;
             word-break: break-word;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .news-type-selector {
+            margin-bottom: 20px;
+        }
+
+        .type-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .type-option {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .type-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .type-option:hover {
+            transform: translateY(-2px);
+        }
+
+        .type-option.selected {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .type-option.urgent {
+            border-color: #dc3545;
+        }
+
+        .type-option.urgent.selected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .type-option.general {
+            border-color: #007bff;
+        }
+
+        .type-option.general.selected {
+            background: #007bff;
+            color: white;
+        }
+
+        .type-option.important {
+            border-color: #ffc107;
+        }
+
+        .type-option.important.selected {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .type-option.announcement {
+            border-color: #28a745;
+        }
+
+        .type-option.announcement.selected {
+            background: #28a745;
+            color: white;
+        }
+
+        .type-label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .type-icon {
+            font-size: 1.5em;
+            display: block;
+            margin-bottom: 5px;
         }
 
         .form-group {
@@ -68,7 +189,8 @@
         input[type="text"],
         input[type="date"],
         textarea,
-        input[type="file"] {
+        input[type="file"],
+        select {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e0e0e0;
@@ -78,11 +200,20 @@
             font-family: inherit;
             -webkit-appearance: none; /* لإزالة التنسيق الافتراضي في iOS */
             appearance: none;
+            background: white;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 15px center;
+            padding-left: 40px;
         }
 
         input[type="text"]:focus,
         input[type="date"]:focus,
-        textarea:focus {
+        textarea:focus,
+        select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -405,9 +536,17 @@
         <div id="mainContent" style="display: none;">
             <h1>📰 إضافة خبر جديد</h1>
             
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="regular-news">خبر عادي</button>
+                <button class="tab" data-tab="newsbar">شريط أخبار</button>
+            </div>
+
             <div id="statusMessage" class="status-message"></div>
 
-            <form id="newsForm">
+            <!-- Regular News Form -->
+            <div class="tab-content active" id="regular-news">
+                <form id="newsForm">
                 <div class="form-group">
                     <label>عنوان الخبر</label>
                     <input type="text" id="title" required placeholder="أدخل عنوان الخبر">
@@ -434,11 +573,70 @@
                     <input type="date" id="eventDate">
                 </div>
 
-                <button type="submit" id="submitBtn">
-                    <span id="btnText">نشر الخبر</span>
-                    <span id="btnLoading" style="display: none;"><span class="loading"></span></span>
-                </button>
-            </form>
+                    <button type="submit" id="submitBtn">
+                        <span id="btnText">نشر الخبر</span>
+                        <span id="btnLoading" style="display: none;"><span class="loading"></span></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Newsbar Form -->
+            <div class="tab-content" id="newsbar">
+                <form id="newsbarForm">
+                    <div class="news-type-selector">
+                        <label>نوع شريط الأخبار</label>
+                        <div class="type-options">
+                            <div class="type-option urgent selected" data-type="urgent">
+                                <input type="radio" name="newsbarType" value="urgent" checked>
+                                <span class="type-icon">🔴</span>
+                                <span class="type-label">عاجل</span>
+                            </div>
+                            <div class="type-option general" data-type="general">
+                                <input type="radio" name="newsbarType" value="general">
+                                <span class="type-icon">📰</span>
+                                <span class="type-label">عام</span>
+                            </div>
+                            <div class="type-option important" data-type="important">
+                                <input type="radio" name="newsbarType" value="important">
+                                <span class="type-icon">⚠️</span>
+                                <span class="type-label">هام</span>
+                            </div>
+                            <div class="type-option announcement" data-type="announcement">
+                                <input type="radio" name="newsbarType" value="announcement">
+                                <span class="type-icon">📢</span>
+                                <span class="type-label">إعلان</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>نص شريط الأخبار</label>
+                        <textarea id="newsbarText" required placeholder="أدخل نص الخبر الذي سيظهر في الشريط المتحرك" style="min-height: 80px;"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>سرعة الحركة</label>
+                        <select id="newsbarSpeed">
+                            <option value="slow">🐢 بطيء (40 ثانية)</option>
+                            <option value="normal" selected>🚶 عادي (25 ثانية)</option>
+                            <option value="fast">🚀 سريع (15 ثانية)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>اتجاه الحركة</label>
+                        <select id="newsbarDirection">
+                            <option value="rtl" selected>⬅️ من اليمين إلى اليسار</option>
+                            <option value="ltr">➡️ من اليسار إلى اليمين</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="submitNewsbarBtn">
+                        <span id="btnNewsbarText">نشر شريط الأخبار</span>
+                        <span id="btnNewsbarLoading" style="display: none;"><span class="loading"></span></span>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -497,6 +695,40 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('newsDate').value = today;
 
+            // Tabs functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+
+                    // Show corresponding content
+                    const targetTab = this.getAttribute('data-tab');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+
+            // Newsbar type selector
+            const typeOptions = document.querySelectorAll('.type-option');
+            typeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected from all
+                    typeOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected to clicked
+                    this.classList.add('selected');
+                    
+                    // Check the radio button
+                    this.querySelector('input[type="radio"]').checked = true;
+                });
+            });
+
             // Image preview
             const imageInput = document.getElementById('image');
             imageInput.addEventListener('change', function(e) {
@@ -511,11 +743,18 @@
                 }
             });
 
-            // Form submission
+            // Regular news form submission
             const form = document.getElementById('newsForm');
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 await submitNews();
+            });
+
+            // Newsbar form submission
+            const newsbarForm = document.getElementById('newsbarForm');
+            newsbarForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await submitNewsbar();
             });
         }
 
@@ -625,6 +864,70 @@
                 showStatus('❌ حدث خطأ أثناء نشر الخبر. حاول مرة أخرى.', 'error');
             } finally {
                 setLoading(false);
+            }
+        }
+
+        async function submitNewsbar() {
+            // Show loader for 1 second
+            const loader = document.getElementById('loader');
+            loader.classList.add('active');
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            loader.classList.remove('active');
+            
+            const submitBtn = document.getElementById('submitNewsbarBtn');
+            const btnText = document.getElementById('btnNewsbarText');
+            const btnLoading = document.getElementById('btnNewsbarLoading');
+            
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline';
+            
+            showStatus('جاري نشر شريط الأخبار...', 'info');
+
+            try {
+                // Get form values
+                const text = document.getElementById('newsbarText').value;
+                const type = document.querySelector('input[name="newsbarType"]:checked').value;
+                const speed = document.getElementById('newsbarSpeed').value;
+                const direction = document.getElementById('newsbarDirection').value;
+
+                // Prepare newsbar data
+                const newsbarData = {
+                    text: text,
+                    type: type,
+                    speed: speed,
+                    direction: direction,
+                    createdAt: new Date().toISOString(),
+                    createdBy: email
+                };
+
+                // Save to Firebase Realtime Database
+                const newsbarRef = ref(database, 'newsbar');
+                const newNewsbarRef = push(newsbarRef);
+                await set(newNewsbarRef, newsbarData);
+
+                // Success
+                showStatus('✅ تم نشر شريط الأخبار بنجاح!', 'success');
+                
+                // Reset form
+                document.getElementById('newsbarForm').reset();
+                
+                // Reset to defaults
+                document.querySelectorAll('.type-option').forEach(opt => opt.classList.remove('selected'));
+                document.querySelector('.type-option.urgent').classList.add('selected');
+                document.querySelector('input[name="newsbarType"][value="urgent"]').checked = true;
+                document.getElementById('newsbarSpeed').value = 'normal';
+                document.getElementById('newsbarDirection').value = 'rtl';
+
+            } catch (error) {
+                console.error('Error submitting newsbar:', error);
+                showStatus('❌ حدث خطأ أثناء نشر شريط الأخبار. حاول مرة أخرى.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
             }
         }
     </script>
