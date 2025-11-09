@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آخر الأخبار</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #ffffff;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Force Latin numerals */
+        * {
+            font-variant-numeric: lining-nums;
+        }
+
+        .news-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+            color: #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Landscape mode: width > height - image on the side */
+        @media (orientation: landscape) {
+            .news-content {
+                flex-direction: row-reverse;
+                gap: 20px;
+                overflow-y: hidden;
+                align-items: stretch;
+            }
+
+            .news-header-text {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                min-width: 0;
+            }
+
+            /* Full width when no image */
+            .news-content:not(:has(.news-image-container)) .news-header-text {
+                max-width: 100%;
+            }
+
+            /* Limited width when image exists */
+            .news-content:has(.news-image-container) .news-header-text {
+                max-width: 60%;
+            }
+
+            .news-image-container {
+                width: 40%;
+                min-width: 280px;
+                max-width: 45%;
+                height: fit-content;
+                margin: 0;
+                flex-shrink: 0;
+                align-self: stretch;
+            }
+
+            .news-image {
+                width: 100%;
+                height: 100%;
+                max-height: none;
+                object-fit: cover;
+            }
+
+            .news-text-content {
+                flex: 1;
+                overflow-y: visible;
+            }
+
+            .news-header {
+                margin-bottom: 15px;
+                flex-shrink: 0;
+            }
+
+            /* Adjust font sizes for landscape */
+            .news-title {
+                font-size: 1.8em;
+            }
+
+            .news-text {
+                font-size: 1.2em;
+            }
+        }
+
+        /* Portrait mode: height > width - image on top */
+        @media (orientation: portrait) {
+            .news-content {
+                flex-direction: column;
+            }
+
+            .news-image-container {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            .news-image {
+                max-height: 250px;
+            }
+        }
+
+        .news-header {
+            margin-bottom: 15px;
+        }
+
+        .news-title {
+            font-size: 2em;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+        .news-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .news-date {
+            background: #f0f0f0;
+            color: #555;
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .news-image-container {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .news-image {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            display: block;
+        }
+
+        .news-text {
+            font-size: 1.3em;
+            line-height: 1.8;
+            text-align: justify;
+            flex: 1;
+            color: #444;
+        }
+
+        .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            flex-direction: column;
+            gap: 15px;
+            color: #666;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .no-news {
+            text-align: center;
+            font-size: 1.5em;
+            padding: 40px;
+            color: #666;
+        }
+
+        /* Responsive for different embed sizes */
+
+        /* 698x428 & 700x506 - Medium sizes */
+        @media (max-width: 750px) {
+            .news-title {
+                font-size: 1.5em;
+            }
+
+            .news-text {
+                font-size: 1.2em;
+            }
+
+            .news-image {
+                max-height: 180px;
+            }
+        }
+
+        /* Small screens */
+        @media (max-width: 500px) {
+            .news-content {
+                padding: 15px;
+            }
+
+            .news-title {
+                font-size: 1.3em;
+            }
+
+            .news-text {
+                font-size: 1.1em;
+            }
+
+            .news-meta {
+                font-size: 0.85em;
+            }
+
+        }
+
+        /* Height adjustments */
+        @media (max-height: 400px) {
+            .news-content {
+                padding: 12px;
+            }
+
+            .news-title {
+                font-size: 1.2em;
+                margin-bottom: 8px;
+            }
+
+            .news-text {
+                font-size: 1em;
+                line-height: 1.5;
+            }
+
+            .news-meta {
+                font-size: 0.75em;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Scrollbar styling */
+        .news-content::-webkit-scrollbar,
+        .news-header-text::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .news-content::-webkit-scrollbar-track,
+        .news-header-text::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+
+        .news-content::-webkit-scrollbar-thumb,
+        .news-header-text::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        .news-content::-webkit-scrollbar-thumb:hover,
+        .news-header-text::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="news-container" id="newsContainer">
+        <div class="loading-container" id="loadingContainer">
+            <div class="loader-spinner"></div>
+            <div>جاري تحميل آخر الأخبار...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyATI4TBIST6x-ZYg4GXSrmP7IwU6JzFRHU",
+            authDomain: "news-1c1e6.firebaseapp.com",
+            databaseURL: "https://news-1c1e6-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "news-1c1e6",
+            storageBucket: "news-1c1e6.firebasestorage.app",
+            messagingSenderId: "486831505348",
+            appId: "1:486831505348:web:fce4acd4ecaeb188fbee91",
+            measurementId: "G-389RM5PRBT"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Convert Arabic numerals to Latin numerals
+        function toLatinNumerals(str) {
+            const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            const latinNumerals = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            
+            return str.replace(/[٠-٩]/g, function(match) {
+                return latinNumerals[arabicNumerals.indexOf(match)];
+            });
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            
+            // التاريخ الميلادي
+            const gregorianOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            let gregorianDate = date.toLocaleDateString('ar-EG', gregorianOptions);
+            
+            // التاريخ الهجري
+            const hijriOptions = { year: 'numeric', month: 'long', day: 'numeric', calendar: 'islamic-umalqura' };
+            let hijriDate = date.toLocaleDateString('ar-SA', hijriOptions);
+            
+            // Convert to Latin numerals
+            gregorianDate = toLatinNumerals(gregorianDate);
+            hijriDate = toLatinNumerals(hijriDate);
+            
+            return `${gregorianDate} - ${hijriDate}`;
+        }
+
+        function displayNews(newsData) {
+            const container = document.getElementById('newsContainer');
+            
+            if (!newsData) {
+                container.innerHTML = `
+                    <div class="loading-container">
+                        <div class="no-news">لا توجد أخبار متاحة حالياً</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const imageHTML = newsData.imageUrl ? 
+                `<div class="news-image-container">
+                    <img src="${newsData.imageUrl}" alt="${newsData.title}" class="news-image">
+                </div>` : '';
+
+            const eventDateHTML = newsData.eventDate ? 
+                `<span class="news-date">📅 تاريخ المناسبة: ${formatDate(newsData.eventDate)}</span>` : '';
+
+            container.innerHTML = `
+                <div class="news-content">
+                    ${imageHTML}
+                    <div class="news-header-text">
+                        <div class="news-header">
+                            <h1 class="news-title">${newsData.title}</h1>
+                            <div class="news-meta">
+                                <span class="news-date">📰 ${formatDate(newsData.newsDate)}</span>
+                                ${eventDateHTML}
+                            </div>
+                        </div>
+                        <div class="news-text-content">
+                            <div class="news-text">${newsData.content}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadLatestNews() {
+            const newsRef = ref(database, 'news');
+            const latestNewsQuery = query(newsRef, orderByChild('createdAt'), limitToLast(1));
+
+            onValue(latestNewsQuery, (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data) {
+                    // Get the latest news (the only one due to limitToLast(1))
+                    const latestNewsKey = Object.keys(data)[0];
+                    const latestNews = data[latestNewsKey];
+                    displayNews(latestNews);
+                } else {
+                    displayNews(null);
+                }
+            }, (error) => {
+                console.error('Error loading news:', error);
+                const container = document.getElementById('newsContainer');
+                container.innerHTML = `
+                    <div class="loading-container">
+                        <div class="no-news">حدث خطأ أثناء تحميل الأخبار</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Load news on page load
+        loadLatestNews();
+    </script>
+</body>
+</html>
+
